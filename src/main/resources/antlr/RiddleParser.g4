@@ -207,7 +207,7 @@ boolean returns [boolean value]
     ;
 
 float returns [double value]
-    : Float{$value = Double.parseDouble($Float.getText());}
+    : Float {$value = Double.parseDouble($Float.getText());}
     ;
 
 integer returns [int value]

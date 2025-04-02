@@ -64,7 +64,8 @@ class RiddleSyntaxHighlighter : SyntaxHighlighterBase() {
                 RiddleLexer.Import, RiddleLexer.Package, RiddleLexer.Class, RiddleLexer.True, RiddleLexer.False,
                 RiddleLexer.Null, RiddleLexer.Try, RiddleLexer.Catch, RiddleLexer.Override, RiddleLexer.Static,
                 RiddleLexer.Const, RiddleLexer.Public, RiddleLexer.Protected, RiddleLexer.Private,
-                RiddleLexer.Virtual, RiddleLexer.Operator, RiddleLexer.Template, RiddleLexer.TypeName
+                RiddleLexer.Virtual, RiddleLexer.Operator, RiddleLexer.Template, RiddleLexer.TypeName,
+                RiddleLexer.Int_,RiddleLexer.Short_,RiddleLexer.Char_,RiddleLexer.Long_,RiddleLexer.Float_,RiddleLexer.Double_,
             ) -> KEYWORDS_KEYS
 
             // 字符串和字符

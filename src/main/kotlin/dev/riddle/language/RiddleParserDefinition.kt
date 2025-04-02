@@ -13,10 +13,11 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
-import org.antlr.intellij.adaptor.lexer.ANTLRLexerAdaptor
 import org.antlr.intellij.adaptor.lexer.PSIElementTypeFactory
 import org.antlr.intellij.adaptor.parser.ANTLRParserAdaptor
 import org.antlr.intellij.adaptor.psi.ANTLRPsiNode
+import org.antlr.v4.runtime.CharStreams
+import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.Parser
 import org.antlr.v4.runtime.tree.ParseTree
 
@@ -25,7 +26,7 @@ class RiddleParserDefinition : ParserDefinition {
         init {
             PSIElementTypeFactory.defineLanguageIElementTypes(
                 RiddleLanguage.INSTANCE,
-                RiddleLexer.tokenNames,
+                RiddleParser.tokenNames,
                 RiddleParser.ruleNames
             )
         }
@@ -40,37 +41,27 @@ class RiddleParserDefinition : ParserDefinition {
         val STRING_LITERALS = TokenSet.create(
             PSIElementTypeFactory.getTokenIElementTypes(RiddleLanguage.INSTANCE)[RiddleLexer.STRING]
         )
-
-        val KEYWORDS = TokenSet.create(
-            PSIElementTypeFactory.getTokenIElementTypes(RiddleLanguage.INSTANCE)[RiddleLexer.Var],
-            PSIElementTypeFactory.getTokenIElementTypes(RiddleLanguage.INSTANCE)[RiddleLexer.Val],
-            PSIElementTypeFactory.getTokenIElementTypes(RiddleLanguage.INSTANCE)[RiddleLexer.For],
-            PSIElementTypeFactory.getTokenIElementTypes(RiddleLanguage.INSTANCE)[RiddleLexer.While],
-            PSIElementTypeFactory.getTokenIElementTypes(RiddleLanguage.INSTANCE)[RiddleLexer.If],
-            PSIElementTypeFactory.getTokenIElementTypes(RiddleLanguage.INSTANCE)[RiddleLexer.Else],
-            PSIElementTypeFactory.getTokenIElementTypes(RiddleLanguage.INSTANCE)[RiddleLexer.Func],
-            PSIElementTypeFactory.getTokenIElementTypes(RiddleLanguage.INSTANCE)[RiddleLexer.Return],
-            PSIElementTypeFactory.getTokenIElementTypes(RiddleLanguage.INSTANCE)[RiddleLexer.Class],
-            PSIElementTypeFactory.getTokenIElementTypes(RiddleLanguage.INSTANCE)[RiddleLexer.Package],
-            PSIElementTypeFactory.getTokenIElementTypes(RiddleLanguage.INSTANCE)[RiddleLexer.Import]
-        )
     }
 
     override fun createLexer(project: Project): Lexer {
-        val lexer = RiddleLexer(null)
-        return ANTLRLexerAdaptor(RiddleLanguage.INSTANCE, lexer)
+        // 使用双层词法适配器
+        return RiddleDualLexerAdapter()
     }
 
     override fun createParser(project: Project): PsiParser {
-        val parser = RiddleParser(null)
-        return object : ANTLRParserAdaptor(RiddleLanguage.INSTANCE, parser) {
+        return object : ANTLRParserAdaptor(RiddleLanguage.INSTANCE, RiddleParser(null)) {
             override fun parse(parser: Parser, root: IElementType): ParseTree {
-                // 指定解析的起点规则
-                return if (root is IFileElementType) {
-                    (parser as RiddleParser).program()
-                } else {
-                    (parser as RiddleParser).statement()
+                // 为解析器创建专用的词法分析器，使用skip处理空白
+                val code = parser.inputStream.text
+                val lexer = RiddleLexer(CharStreams.fromString(code))
+                val tokenStream = CommonTokenStream(lexer)
+                (parser as RiddleParser).tokenStream = tokenStream
+
+                if (root is IFileElementType) {
+                    return parser.program()
                 }
+                // 处理其他元素类型...
+                throw UnsupportedOperationException("不支持的根元素类型: $root")
             }
         }
     }

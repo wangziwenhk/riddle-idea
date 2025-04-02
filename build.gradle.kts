@@ -2,6 +2,7 @@ plugins {
     id("java")
     id("org.jetbrains.kotlin.jvm") version "1.9.25"
     id("org.jetbrains.intellij") version "1.17.4"
+    id("antlr")
 }
 
 group = "dev.riddle"
@@ -11,12 +12,38 @@ repositories {
     mavenCentral()
 }
 
+dependencies {
+    antlr("org.antlr:antlr4:4.13.2")
+    implementation("org.antlr:antlr4-runtime:4.13.2")
+    implementation("org.antlr:antlr4-intellij-adaptor:0.1")
+}
+
+
 // Configure Gradle IntelliJ Plugin
 // Read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
 intellij {
     version.set("2024.1.7")
     type.set("IC") // Target IDE Platform
 }
+
+tasks.withType<AntlrTask> {
+    arguments.add("-visitor")
+    arguments.add("-listener")
+    outputDirectory = layout.buildDirectory.dir("generated-src/antlr/main").get().asFile
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs("src/main/gen")
+        }
+    }
+}
+
+tasks.compileKotlin {
+    dependsOn(tasks.generateGrammarSource)
+}
+
 
 tasks {
     // Set the JVM compatibility versions
